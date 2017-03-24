@@ -5,6 +5,8 @@ import com.luisarthurbv.entities.AddressEntity;
 import com.luisarthurbv.models.Address;
 import com.luisarthurbv.utils.MapUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -25,22 +27,23 @@ public class CepController {
     }
 
     @RequestMapping(value = "/getAddress", method = RequestMethod.POST)
-    public Map retrieveAddress(@RequestBody RetrieveAddressRequest r) {
+    public ResponseEntity<Map> retrieveAddress(@RequestBody RetrieveAddressRequest r) {
         try {
             AddressEntity entity = retrieveAddress.retrieve(r.cep);
-            return MapUtils.convertObject(new RetrieveAddressResponse(new Address(entity)));
+            Map body = MapUtils.convertObject(new RetrieveAddressResponse(new Address(entity)));
+            return new ResponseEntity<Map>(body, HttpStatus.OK);
         } catch (RetrieveAddress.InvalidCepException e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", String.format("CEP: %s is invalid", r.cep));
-            return errorResponse;
+            return new ResponseEntity<Map>(errorResponse, HttpStatus.NOT_FOUND);
         } catch (RetrieveAddress.CepNotFoundException e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", String.format("CEP: %s wasn't found", r.cep));
-            return errorResponse;
+            return new ResponseEntity<Map>(errorResponse, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", String.format("Unknown error", r.cep));
-            return errorResponse;
+            return new ResponseEntity<Map>(errorResponse, HttpStatus.METHOD_FAILURE);
         }
     }
 
